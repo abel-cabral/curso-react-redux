@@ -1,0 +1,54 @@
+version: '2'
+services:
+  # ANCHOR Servidor Web -----------------------------------------------------------------------------------------
+  nginx:
+    image: nginx:latest    
+    container_name: nginx
+    ports:
+      - '3000:80'
+    volumes:
+      - ./frontend/public:/usr/share/nginx/html
+    working_dir: /usr/share/nginx/html
+    depends_on:
+      - front
+
+  # ANCHOR Aplicação em React Native ---------------------------------------------------------------------------
+  front:
+    container_name: frontend
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+    working_dir: /app
+    links:
+      - back
+    depends_on:
+      - back
+    # command: sh -c 'yarn install && yarn run dev'
+    command: sh -c 'yarn run dev'
+
+  # ANCHOR Api em NodeJS ---------------------------------------------------------------------------------------
+  back:
+    container_name: backend
+    image: node:11   
+    volumes:
+      - ./backend:/app
+    tty: true
+    working_dir: /app
+    ports:
+      - '3003:3003'
+    links:
+      - mongo
+    depends_on:
+      - mongo
+    command: sh -c 'yarn run production && ./node_modules/.bin/pm2 monit'
+
+  # ANCHOR Banco de Dados ---------------------------------------------------------------------------------------
+  mongo:
+    container_name: mongo
+    image: mongo   
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    ports:
+      - 27017:27017
+    command: mongod --smallfiles --logpath=/dev/null # --quiet
