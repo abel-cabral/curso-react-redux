@@ -1,7 +1,5 @@
 FROM node:11
 
-RUN yarn install
-
+WORKDIR /app
 CMD [ "true" ]
-
 EXPOSE 8080
