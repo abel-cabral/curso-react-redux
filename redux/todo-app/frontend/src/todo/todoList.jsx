@@ -1,7 +1,10 @@
 import React from 'react';
 import IconButton from '../template/iconButton';
 
-export default props => {
+// NOTE Responsavel por conectar nosso state e props do react com o redux
+import { connect } from 'react-redux';
+
+const TodoList = props => {
     const renderRows = () => {
         const list = props.list || [];
 
@@ -13,11 +16,11 @@ export default props => {
                     outro parametro que não é o evento.
                     Se fosse o evento, não seria necessário */}
                     <IconButton style="success" icon="check" hide={todo.done}
-                        onClick={() => props.handleMarkAsDone(todo)}/>
+                        onClick={() => props.handleMarkAsDone(todo)} />
                     <IconButton style="warning" icon="undo" hide={!todo.done}
-                    onClick={() => props.handleMarkAsPending(todo)}/>
+                        onClick={() => props.handleMarkAsPending(todo)} />
                     <IconButton style="danger" icon="trash-o" hide={!todo.done}
-                        onClick={() => props.handleRemove(todo)}/>
+                        onClick={() => props.handleRemove(todo)} />
                 </td>
             </tr>
         ));
@@ -37,3 +40,11 @@ export default props => {
         </table>
     );
 };
+
+// NOTE Mapeia o state com as props do react
+const mapStateToProps = state => ({ // Recebemos o state do react e devolvemos um objeto
+    list: state.todo.list // Vindo la do nosso rootReducer
+});
+//const mapDispatchToProps = dispatch => 
+
+export default connect(mapStateToProps)(TodoList);
