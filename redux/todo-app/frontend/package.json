@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "webpack-dev-server --progress --colors --inline --hot",
-    "production": "webpack --progress -p"   
+    "dev": "webpack --watch",
+    "production": "webpack --progress -p"
   },
   "keywords": [],
   "author": "",
@@ -31,6 +31,7 @@
     "webpack-dev-server": "^1.16.2"
   },
   "dependencies": {
-    "nodemon": "^1.19.0"
+    "nodemon": "^1.19.0",
+    "nodemon-webpack-plugin": "^4.0.8"
   }
 }

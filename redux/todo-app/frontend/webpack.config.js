@@ -1,11 +1,13 @@
 const webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const NodemonPlugin = require( 'nodemon-webpack-plugin' )
+const path = require('path');
 
 module.exports = {
     entry: './src/index.jsx',
     output: {
-        path: __dirname + '/public',
-        filename: './app.js'
+        path: path.resolve('./public'),
+        filename: 'app.js',    
     },
     devServer: {
         port: 8080,
@@ -18,6 +20,10 @@ module.exports = {
         }
     },
     plugins: [
+        new NodemonPlugin({
+            watch: path.resolve('./public'),
+            script: './public/app.js',
+        }),
         new ExtractTextPlugin('app.css')
     ],
     module: {
