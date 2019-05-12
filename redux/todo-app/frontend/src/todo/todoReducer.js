@@ -1,17 +1,6 @@
 const INITIAL_STATE = {
-  description: 'Ler Livros',
-  list: [
-    {
-      _id: 1,
-      description: 'Pagar fatura do cartão',
-      done: true
-    },
-    {
-      _id: 2,
-      description: 'Estudar Prograamação',
-      done: false
-    }
-  ]
+  description: '',
+  list: []
 };
 
 export default (state = INITIAL_STATE, action) => {
@@ -19,6 +8,10 @@ export default (state = INITIAL_STATE, action) => {
   switch (action.type) {
     case 'DESCRIPTION_CHANGED':
       return { ...state, description: action.payload };
+    case 'TODO_SEARCHED':
+      return { ...state, list: action.payload.data };    
+    case 'CLEAR_FORM':
+      return { ...state, description: '' }; // Irá limpar a descrição após add um novo elemento
     default:
       return state;
   }

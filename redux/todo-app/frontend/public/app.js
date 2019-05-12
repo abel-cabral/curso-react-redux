@@ -66,23 +66,45 @@
 
 	var _reducers2 = _interopRequireDefault(_reducers);
 
+	var _reduxPromise = __webpack_require__(339);
+
+	var _reduxPromise2 = _interopRequireDefault(_reduxPromise);
+
+	var _reduxMulti = __webpack_require__(346);
+
+	var _reduxMulti2 = _interopRequireDefault(_reduxMulti);
+
+	var _reduxThunk = __webpack_require__(347);
+
+	var _reduxThunk2 = _interopRequireDefault(_reduxThunk);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	// NOTE Incialização da store do redux, recebendo o rootReducers que criamos
-	// Cria a store redux
-	var store = (0, _redux.createStore)(_reducers2.default); // Component react que vai pegar o state e passar pro components internos
+	// Permite que possamos devolver um dispach assim podemos usar o then
+
+	// ANCHOR Bug window not defined
+	// Espera a promisse passada ser resolvida para assim disparar os reduncers
+	// Component react que vai pegar o state e passar pro components internos
 
 
 	// NOTE Configurando Redux
-
-
 	if (typeof window !== 'undefined') {
+	    // NOTE Inicializando ferramenta de depuraçao do redux
+	    var devTools = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__() || compose;
+
+	    // NOTE Incialização da store do redux, recebendo o rootReducers que criamos
+	    var store = (0, _redux.applyMiddleware)(_reduxThunk2.default, _reduxMulti2.default, _reduxPromise2.default)(_redux.createStore)(_reducers2.default, devTools);
+
 	    _reactDom2.default.render(_react2.default.createElement(
 	        _reactRedux.Provider,
 	        { store: store },
 	        _react2.default.createElement(_app2.default, null)
 	    ), document.getElementById('app'));
-	}
+	} // Retorna um array de actions, em paralelo nao ideal para assyncronas
+
+
+	// NOTE Middlewares
+	// Cria a store redux
 
 /***/ }),
 /* 1 */
@@ -27662,17 +27684,11 @@
 	    value: true
 	});
 
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _react = __webpack_require__(1);
 
 	var _react2 = _interopRequireDefault(_react);
-
-	var _axios = __webpack_require__(268);
-
-	var _axios2 = _interopRequireDefault(_axios);
 
 	var _pageHeader = __webpack_require__(293);
 
@@ -27694,167 +27710,29 @@
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var URL = 'http://localhost:3003/api/todos';
-
 	/*
-	O componente Todo será responsável por todo o estado
-	da aplicação, pois é mais simples de espalhar esse estado
-	para todos os outros componentes (usando Redux esse cenário muda)
+	    ANCHOR O componente Todo será responsável por todo o estado
+	    da aplicação, pois é mais simples de espalhar esse estado
+	    para todos os outros componentes (usando Redux esse cenário muda)
 	*/
-
 	var Todo = function (_Component) {
 	    _inherits(Todo, _Component);
 
 	    function Todo(props) {
 	        _classCallCheck(this, Todo);
 
-	        var _this = _possibleConstructorReturn(this, (Todo.__proto__ || Object.getPrototypeOf(Todo)).call(this, props));
-
-	        _this.state = { description: '', list: [] };
-
-	        // Faz um bind para não perder o contexto do this
-	        _this.handleAdd = _this.handleAdd.bind(_this);
-	        _this.handleChange = _this.handleChange.bind(_this);
-	        _this.handleRemove = _this.handleRemove.bind(_this);
-	        _this.handleMarkAsDone = _this.handleMarkAsDone.bind(_this);
-	        _this.handleMarkAsPending = _this.handleMarkAsPending.bind(_this);
-	        _this.handleSearch = _this.handleSearch.bind(_this);
-	        _this.handleClear = _this.handleClear.bind(_this);
-
-	        _this.refresh();
-	        return _this;
+	        return _possibleConstructorReturn(this, (Todo.__proto__ || Object.getPrototypeOf(Todo)).call(this, props));
 	    }
 
 	    _createClass(Todo, [{
-	        key: 'refresh',
-
-
-	        // Método responsável por trazer a lista atualizada
-	        value: function refresh() {
-	            var _this2 = this;
-
-	            var description = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-
-	            /*
-	            Se a descrição for valida adiciona o parametro na URL do GET
-	            caso contrário, deixa vazio
-	            */
-	            var search = description ? '&description__regex=/' + description + '/' : '';
-
-	            /*
-	            1 - Faz um GET organizando por data de criação
-	            2 - Utiliza a descrição informada (para manter a descrição no input
-	            devemos passar o estado)
-	            3 - Preenche a lista com todas as tarefas criadas no Banco
-	            */
-	            _axios2.default.get(URL + '?sort=-createdAt' + search).then(function (resp) {
-	                return _this2.setState(_extends({}, _this2.state, { description: description, list: resp.data }));
-	            });
-	        }
-	    }, {
-	        key: 'handleAdd',
-
-
-	        // Método responsável por adicionar uma nova todo
-	        value: function handleAdd() {
-	            var _this3 = this;
-
-	            var description = this.state.description;
-
-	            /*
-	            1 - Faz um POST enviando a descrição
-	            2 - Faz um refresh usando o método refresh
-	            */
-	            _axios2.default.post(URL, { description: description }).then(function (resp) {
-	                return _this3.refresh();
-	            });
-	        }
-	    }, {
-	        key: 'handleChange',
-
-
-	        // Método responsável por atualizar o state  
-	        value: function handleChange(e) {
-	            // Seta o State da descrição baseada no valor do input
-	            this.setState(_extends({}, this.state, { description: e.target.value }));
-	        }
-	    }, {
-	        key: 'handleRemove',
-
-
-	        // Método responsável por remover um todo
-	        value: function handleRemove(todo) {
-	            var _this4 = this;
-
-	            /*
-	            1 - Faz um DELETE utilizando o ID da TODO
-	            2 - Faz um refresh usando o método refresh
-	            */
-	            _axios2.default.delete(URL + '/' + todo._id).then(function (result) {
-	                return _this4.refresh(_this4.state.description);
-	            });
-	        }
-	    }, {
-	        key: 'handleMarkAsDone',
-
-
-	        // Método responsável por marcar um todo como feito
-	        value: function handleMarkAsDone(todo) {
-	            var _this5 = this;
-
-	            /*
-	            1 - Faz um PUT utilizando o ID e passando o done como true
-	            2 - Faz um refresh utilizando o método refresh
-	            */
-	            _axios2.default.put(URL + '/' + todo._id, _extends({}, todo, { done: true })).then(function (result) {
-	                return _this5.refresh(_this5.state.description);
-	            });
-	        }
-	    }, {
-	        key: 'handleMarkAsPending',
-
-
-	        // Método responsável por marcar um todo como não feito
-	        value: function handleMarkAsPending(todo) {
-	            var _this6 = this;
-
-	            /*
-	            1 - Faz um PUT utilizando o ID e passando o done como false
-	            2 - Faz um refresh utilizando o método refresh
-	            */
-	            _axios2.default.put(URL + '/' + todo._id, _extends({}, todo, { done: false })).then(function (result) {
-	                return _this6.refresh(_this6.state.description);
-	            });
-	        }
-	    }, {
-	        key: 'handleSearch',
-
-
-	        // Método responsável pela busca de todos especificas
-	        value: function handleSearch() {
-	            this.refresh(this.state.description);
-	        }
-	    }, {
-	        key: 'handleClear',
-	        value: function handleClear() {
-	            this.refresh();
-	        }
-	    }, {
 	        key: 'render',
 	        value: function render() {
 	            return _react2.default.createElement(
 	                'div',
 	                null,
 	                _react2.default.createElement(_pageHeader2.default, { name: 'Tarefas', small: 'Cadastro' }),
-	                _react2.default.createElement(_todoForm2.default, {
-	                    handleAdd: this.handleAdd,
-	                    handleChange: this.handleChange,
-	                    handleSearch: this.handleSearch,
-	                    handleClear: this.handleClear }),
-	                _react2.default.createElement(_todoList2.default, {
-	                    handleRemove: this.handleRemove,
-	                    handleMarkAsDone: this.handleMarkAsDone,
-	                    handleMarkAsPending: this.handleMarkAsPending })
+	                _react2.default.createElement(_todoForm2.default, null),
+	                _react2.default.createElement(_todoList2.default, null)
 	            );
 	        }
 	    }]);
@@ -29396,6 +29274,9 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	exports.TodoForm = undefined;
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _react = __webpack_require__(1);
 
@@ -29417,45 +29298,104 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var TodoForm = function TodoForm(props) {
-	    var keyHandler = function keyHandler(e) {
-	        if (e.key === 'Enter') {
-	            e.shiftKey ? props.handleSearch() : props.handleAdd();
-	        } else if (e.key === 'Escape') {
-	            props.handleClear();
-	        };
-	    };
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	    return _react2.default.createElement(
-	        'div',
-	        { role: 'form', className: 'todoForm' },
-	        _react2.default.createElement(
-	            _grid2.default,
-	            { cols: '12 9 10' },
-	            _react2.default.createElement('input', { id: 'description', className: 'form-control',
-	                placeholder: 'Adicione uma tarefa',
-	                value: props.description,
-	                onKeyUp: keyHandler,
-	                onChange: props.changeDescription })
-	        ),
-	        _react2.default.createElement(
-	            _grid2.default,
-	            { cols: '12 3 2' },
-	            _react2.default.createElement(_iconButton2.default, { style: 'primary', icon: 'plus',
-	                onClick: props.handleAdd }),
-	            _react2.default.createElement(_iconButton2.default, { style: 'info', icon: 'search',
-	                onClick: props.handleSearch }),
-	            _react2.default.createElement(_iconButton2.default, { style: 'default', icon: 'close',
-	                onClick: props.handleClear })
-	        )
-	    );
-	};
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	// NOTE Responsavel por conectar nosso state e props do react com o redux
+
 
 	// NOTE Importamos nossas actions criadas
 
 
-	// NOTE Responsavel por conectar nosso state e props do react com o redux
+	// ANCHOR Componenete baseado em classe
+	var TodoForm = exports.TodoForm = function (_Component) {
+	    _inherits(TodoForm, _Component);
 
+	    function TodoForm(props) {
+	        _classCallCheck(this, TodoForm);
+
+	        // NOTE Garante que o this chamado dentro do component aponte pra ele proprio
+	        var _this = _possibleConstructorReturn(this, (TodoForm.__proto__ || Object.getPrototypeOf(TodoForm)).call(this, props));
+
+	        _this.keyHandler = _this.keyHandler.bind(_this);
+	        return _this;
+	    }
+
+	    // NOTE Um dos ciclos de vida do react
+
+
+	    _createClass(TodoForm, [{
+	        key: 'componentWillMount',
+	        value: function componentWillMount() {
+	            this.props.search();
+	        }
+	    }, {
+	        key: 'keyHandler',
+	        value: function keyHandler(e) {
+	            // NOTE destructiorin extrai de um obj os atributos que desejamos 
+	            var _props = this.props,
+	                add = _props.add,
+	                search = _props.search,
+	                description = _props.description,
+	                cleanForm = _props.cleanForm;
+
+	            if (e.key === 'Enter') {
+	                e.shiftKey ? search() : add(description);
+	            } else if (e.key === 'Escape') {
+	                cleanForm();
+	            };
+	        }
+	    }, {
+	        key: 'render',
+
+
+	        // NOTE Obrigatorio ter um render
+	        value: function render() {
+	            // NOTE destructiorin extrai de um obj os atributos que desejamos 
+	            var _props2 = this.props,
+	                add = _props2.add,
+	                search = _props2.search,
+	                description = _props2.description,
+	                cleanForm = _props2.cleanForm,
+	                changeDescription = _props2.changeDescription;
+
+	            return _react2.default.createElement(
+	                'div',
+	                { role: 'form', className: 'todoForm' },
+	                _react2.default.createElement(
+	                    _grid2.default,
+	                    { cols: '12 9 10' },
+	                    _react2.default.createElement('input', { id: 'description', className: 'form-control',
+	                        placeholder: 'Adicione uma tarefa',
+	                        value: description,
+	                        onKeyUp: this.keyHandler,
+	                        onChange: changeDescription })
+	                ),
+	                _react2.default.createElement(
+	                    _grid2.default,
+	                    { cols: '12 3 2' },
+	                    _react2.default.createElement(_iconButton2.default, { style: 'primary', icon: 'plus',
+	                        onClick: function onClick() {
+	                            return add(description);
+	                        } }),
+	                    _react2.default.createElement(_iconButton2.default, { style: 'info', icon: 'search',
+	                        onClick: function onClick() {
+	                            return search(description);
+	                        } }),
+	                    _react2.default.createElement(_iconButton2.default, { style: 'default', icon: 'close',
+	                        onClick: function onClick() {
+	                            return cleanForm();
+	                        } })
+	                )
+	            );
+	        }
+	    }]);
+
+	    return TodoForm;
+	}(_react.Component);
 
 	var mapStateToProps = function mapStateToProps(state) {
 	    return {
@@ -29464,7 +29404,7 @@
 	};
 	// NOTE Dispara a ação e passa para todos os reducers. Nosso onChange se inscreve no changeDescription
 	var mapDispatchToProps = function mapDispatchToProps(dispatch) {
-	    return (0, _redux.bindActionCreators)({ changeDescription: _todoActions.changeDescription }, dispatch);
+	    return (0, _redux.bindActionCreators)({ changeDescription: _todoActions.changeDescription, search: _todoActions.search, add: _todoActions.add, cleanForm: _todoActions.cleanForm }, dispatch);
 	};
 
 	exports.default = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(TodoForm);
@@ -31756,23 +31696,102 @@
 
 /***/ }),
 /* 334 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	/*
-	    ANCHOR Vão retornar objs que representam a label da action clicada.
-	    Esse método apenas cria eventos
-	*/
+	exports.cleanForm = exports.remove = exports.pending = exports.done = exports.add = exports.search = exports.changeDescription = undefined;
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; /*
+	                                                                                                                                                                                                                                                                      ANCHOR Vão retornar objs que representam a label da action clicada.
+	                                                                                                                                                                                                                                                                      Esse método apenas cria eventos
+	                                                                                                                                                                                                                                                                  */
+
+
+	var _axios = __webpack_require__(268);
+
+	var _axios2 = _interopRequireDefault(_axios);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var URL = 'http://localhost:3003/api/todos';
 
 	// NOTE Quando há mudança no input
 	var changeDescription = exports.changeDescription = function changeDescription(event) {
 	  return {
 	    type: 'DESCRIPTION_CHANGED', // type é obrigatório
 	    payload: event.target.value // Esse é opcional, mas estou retornando o valor alterado
+	  };
+	};
+
+	var search = exports.search = function search() {
+	  var description = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+
+	  var request = _axios2.default.get(URL + '?sort=-createdAt' + description);
+	  return {
+	    type: 'TODO_SEARCHED',
+	    payload: request // NOTE Retornamos a funcao asyncrona, precisa de middleware
+	  };
+	};
+
+	// NOTE Middleware multi e thunk
+	var add = exports.add = function add(description) {
+	  return function (dispatch) {
+	    _axios2.default.post(URL, { description: description }).then(function (response) {
+	      return dispatch({
+	        type: 'TODO_ADDED',
+	        payload: response.data
+	      });
+	    }).then(function () {
+	      return dispatch(cleanForm());
+	    }).then(function () {
+	      return dispatch(search());
+	    });
+	  };
+	};
+
+	var done = exports.done = function done(todo) {
+	  return function (dispatch) {
+	    _axios2.default.put(URL + '/' + todo._id, _extends({}, todo, { done: true })).then(function () {
+	      return dispatch({
+	        type: 'IS_DONE'
+	      });
+	    }).then(function () {
+	      return dispatch(search());
+	    });
+	  };
+	};
+
+	var pending = exports.pending = function pending(todo) {
+	  return function (dispatch) {
+	    _axios2.default.put(URL + '/' + todo._id, _extends({}, todo, { done: false })).then(function () {
+	      return dispatch({
+	        type: 'IS_PENDING'
+	      });
+	    }).then(function () {
+	      return dispatch(search());
+	    });
+	  };
+	};
+
+	var remove = exports.remove = function remove(todo) {
+	  return function (dispatch) {
+	    _axios2.default.delete(URL + '/' + todo._id).then(function () {
+	      return dispatch({
+	        type: 'IS_DELETED'
+	      });
+	    }).then(function () {
+	      return dispatch(search());
+	    });
+	  };
+	};
+
+	var cleanForm = exports.cleanForm = function cleanForm() {
+	  return {
+	    type: 'CLEAR_FORM'
 	  };
 	};
 
@@ -31785,6 +31804,9 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	exports.TodoList = undefined;
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _react = __webpack_require__(1);
 
@@ -31796,82 +31818,127 @@
 
 	var _reactRedux = __webpack_require__(298);
 
+	var _redux = __webpack_require__(308);
+
+	var _todoActions = __webpack_require__(334);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var TodoList = function TodoList(props) {
-	    var renderRows = function renderRows() {
-	        var list = props.list || [];
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	        return list.map(function (todo) {
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	// NOTE Responsavel por conectar nosso state e props do react com o redux
+
+
+	// NOTE Importamos nossas actions criadas
+
+
+	var TodoList = exports.TodoList = function (_Component) {
+	    _inherits(TodoList, _Component);
+
+	    function TodoList(props) {
+	        _classCallCheck(this, TodoList);
+
+	        return _possibleConstructorReturn(this, (TodoList.__proto__ || Object.getPrototypeOf(TodoList)).call(this, props));
+	    }
+
+	    _createClass(TodoList, [{
+	        key: 'renderRows',
+	        value: function renderRows() {
+	            var _this2 = this;
+
+	            var list = this.props.list || [];
+
+	            return list.map(function (todo) {
+	                return _react2.default.createElement(
+	                    'tr',
+	                    { key: todo._id },
+	                    _react2.default.createElement(
+	                        'td',
+	                        {
+	                            className: todo.done ? 'markedAsDone' : '' },
+	                        todo.description
+	                    ),
+	                    _react2.default.createElement(
+	                        'td',
+	                        null,
+	                        _react2.default.createElement(_iconButton2.default, {
+	                            style: 'success',
+	                            icon: 'check',
+	                            hide: todo.done,
+	                            onClick: function onClick() {
+	                                return _this2.props.done(todo);
+	                            } }),
+	                        _react2.default.createElement(_iconButton2.default, {
+	                            style: 'warning',
+	                            icon: 'undo',
+	                            hide: !todo.done,
+	                            onClick: function onClick() {
+	                                return _this2.props.pending(todo);
+	                            } }),
+	                        _react2.default.createElement(_iconButton2.default, {
+	                            style: 'danger',
+	                            icon: 'trash-o',
+	                            hide: !todo.done,
+	                            onClick: function onClick() {
+	                                return _this2.props.remove(todo);
+	                            } })
+	                    )
+	                );
+	            });
+	        }
+	    }, {
+	        key: 'render',
+	        value: function render() {
 	            return _react2.default.createElement(
-	                'tr',
-	                { key: todo._id },
+	                'table',
+	                { className: 'table' },
 	                _react2.default.createElement(
-	                    'td',
-	                    { className: todo.done ? 'markedAsDone' : '' },
-	                    todo.description
+	                    'thead',
+	                    null,
+	                    _react2.default.createElement(
+	                        'tr',
+	                        null,
+	                        _react2.default.createElement(
+	                            'th',
+	                            null,
+	                            'Descri\xE7\xE3o'
+	                        ),
+	                        _react2.default.createElement(
+	                            'th',
+	                            { className: 'tableActions' },
+	                            'A\xE7\xF5es'
+	                        )
+	                    )
 	                ),
 	                _react2.default.createElement(
-	                    'td',
+	                    'tbody',
 	                    null,
-	                    _react2.default.createElement(_iconButton2.default, { style: 'success', icon: 'check', hide: todo.done,
-	                        onClick: function onClick() {
-	                            return props.handleMarkAsDone(todo);
-	                        } }),
-	                    _react2.default.createElement(_iconButton2.default, { style: 'warning', icon: 'undo', hide: !todo.done,
-	                        onClick: function onClick() {
-	                            return props.handleMarkAsPending(todo);
-	                        } }),
-	                    _react2.default.createElement(_iconButton2.default, { style: 'danger', icon: 'trash-o', hide: !todo.done,
-	                        onClick: function onClick() {
-	                            return props.handleRemove(todo);
-	                        } })
+	                    this.renderRows()
 	                )
 	            );
-	        });
-	    };
+	        }
+	    }]);
 
-	    return _react2.default.createElement(
-	        'table',
-	        { className: 'table' },
-	        _react2.default.createElement(
-	            'thead',
-	            null,
-	            _react2.default.createElement(
-	                'tr',
-	                null,
-	                _react2.default.createElement(
-	                    'th',
-	                    null,
-	                    'Descri\xE7\xE3o'
-	                ),
-	                _react2.default.createElement(
-	                    'th',
-	                    { className: 'tableActions' },
-	                    'A\xE7\xF5es'
-	                )
-	            )
-	        ),
-	        _react2.default.createElement(
-	            'tbody',
-	            null,
-	            renderRows()
-	        )
-	    );
-	};
+	    return TodoList;
+	}(_react.Component);
 
 	// NOTE Mapeia o state com as props do react
 
 
-	// NOTE Responsavel por conectar nosso state e props do react com o redux
 	var mapStateToProps = function mapStateToProps(state) {
 	    return { // Recebemos o state do react e devolvemos um objeto
 	        list: state.todo.list // Vindo la do nosso rootReducer
 	    };
 	};
-	//const mapDispatchToProps = dispatch => 
+	var mapDispatchToProps = function mapDispatchToProps(dispatch) {
+	    return (0, _redux.bindActionCreators)({ done: _todoActions.done, pending: _todoActions.pending, remove: _todoActions.remove }, dispatch);
+	};
 
-	exports.default = (0, _reactRedux.connect)(mapStateToProps)(TodoList);
+	exports.default = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(TodoList);
 
 /***/ }),
 /* 336 */
@@ -31974,16 +32041,8 @@
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 	var INITIAL_STATE = {
-	  description: 'Ler Livros',
-	  list: [{
-	    _id: 1,
-	    description: 'Pagar fatura do cartão',
-	    done: true
-	  }, {
-	    _id: 2,
-	    description: 'Estudar Prograamação',
-	    done: false
-	  }]
+	  description: '',
+	  list: []
 	};
 
 	exports.default = function () {
@@ -31994,10 +32053,861 @@
 	  switch (action.type) {
 	    case 'DESCRIPTION_CHANGED':
 	      return _extends({}, state, { description: action.payload });
+	    case 'TODO_SEARCHED':
+	      return _extends({}, state, { list: action.payload.data });
+	    case 'CLEAR_FORM':
+	      return _extends({}, state, { description: '' }); // Irá limpar a descrição após add um novo elemento
 	    default:
 	      return state;
 	  }
 	};
+
+/***/ }),
+/* 339 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	exports.__esModule = true;
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	exports['default'] = promiseMiddleware;
+
+	var _fluxStandardAction = __webpack_require__(340);
+
+	function isPromise(val) {
+	  return val && typeof val.then === 'function';
+	}
+
+	function promiseMiddleware(_ref) {
+	  var dispatch = _ref.dispatch;
+
+	  return function (next) {
+	    return function (action) {
+	      if (!_fluxStandardAction.isFSA(action)) {
+	        return isPromise(action) ? action.then(dispatch) : next(action);
+	      }
+
+	      return isPromise(action.payload) ? action.payload.then(function (result) {
+	        return dispatch(_extends({}, action, { payload: result }));
+	      }, function (error) {
+	        return dispatch(_extends({}, action, { payload: error, error: true }));
+	      }) : next(action);
+	    };
+	  };
+	}
+
+	module.exports = exports['default'];
+
+/***/ }),
+/* 340 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	exports.__esModule = true;
+	exports.isFSA = isFSA;
+	exports.isError = isError;
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	var _lodashIsplainobject = __webpack_require__(341);
+
+	var _lodashIsplainobject2 = _interopRequireDefault(_lodashIsplainobject);
+
+	var validKeys = ['type', 'payload', 'error', 'meta'];
+
+	function isValidKey(key) {
+	  return validKeys.indexOf(key) > -1;
+	}
+
+	function isFSA(action) {
+	  return _lodashIsplainobject2['default'](action) && typeof action.type !== 'undefined' && Object.keys(action).every(isValidKey);
+	}
+
+	function isError(action) {
+	  return action.error === true;
+	}
+
+/***/ }),
+/* 341 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	/**
+	 * lodash 3.2.0 (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modern modularize exports="npm" -o ./`
+	 * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 * Available under MIT license <https://lodash.com/license>
+	 */
+	var baseFor = __webpack_require__(342),
+	    isArguments = __webpack_require__(343),
+	    keysIn = __webpack_require__(344);
+
+	/** `Object#toString` result references. */
+	var objectTag = '[object Object]';
+
+	/**
+	 * Checks if `value` is object-like.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+	 */
+	function isObjectLike(value) {
+	  return !!value && typeof value == 'object';
+	}
+
+	/** Used for native method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/**
+	 * Used to resolve the [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var objToString = objectProto.toString;
+
+	/**
+	 * The base implementation of `_.forIn` without support for callback
+	 * shorthands and `this` binding.
+	 *
+	 * @private
+	 * @param {Object} object The object to iterate over.
+	 * @param {Function} iteratee The function invoked per iteration.
+	 * @returns {Object} Returns `object`.
+	 */
+	function baseForIn(object, iteratee) {
+	  return baseFor(object, iteratee, keysIn);
+	}
+
+	/**
+	 * Checks if `value` is a plain object, that is, an object created by the
+	 * `Object` constructor or one with a `[[Prototype]]` of `null`.
+	 *
+	 * **Note:** This method assumes objects created by the `Object` constructor
+	 * have no inherited enumerable properties.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a plain object, else `false`.
+	 * @example
+	 *
+	 * function Foo() {
+	 *   this.a = 1;
+	 * }
+	 *
+	 * _.isPlainObject(new Foo);
+	 * // => false
+	 *
+	 * _.isPlainObject([1, 2, 3]);
+	 * // => false
+	 *
+	 * _.isPlainObject({ 'x': 0, 'y': 0 });
+	 * // => true
+	 *
+	 * _.isPlainObject(Object.create(null));
+	 * // => true
+	 */
+	function isPlainObject(value) {
+	  var Ctor;
+
+	  // Exit early for non `Object` objects.
+	  if (!(isObjectLike(value) && objToString.call(value) == objectTag && !isArguments(value)) ||
+	      (!hasOwnProperty.call(value, 'constructor') && (Ctor = value.constructor, typeof Ctor == 'function' && !(Ctor instanceof Ctor)))) {
+	    return false;
+	  }
+	  // IE < 9 iterates inherited properties before own properties. If the first
+	  // iterated property is an object's own property then there are no inherited
+	  // enumerable properties.
+	  var result;
+	  // In most environments an object's own properties are iterated before
+	  // its inherited properties. If the last iterated property is an object's
+	  // own property then there are no inherited enumerable properties.
+	  baseForIn(value, function(subValue, key) {
+	    result = key;
+	  });
+	  return result === undefined || hasOwnProperty.call(value, result);
+	}
+
+	module.exports = isPlainObject;
+
+
+/***/ }),
+/* 342 */
+/***/ (function(module, exports) {
+
+	/**
+	 * lodash 3.0.3 (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modularize exports="npm" -o ./`
+	 * Copyright 2012-2016 The Dojo Foundation <http://dojofoundation.org/>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright 2009-2016 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 * Available under MIT license <https://lodash.com/license>
+	 */
+
+	/**
+	 * The base implementation of `baseForIn` and `baseForOwn` which iterates
+	 * over `object` properties returned by `keysFunc` invoking `iteratee` for
+	 * each property. Iteratee functions may exit iteration early by explicitly
+	 * returning `false`.
+	 *
+	 * @private
+	 * @param {Object} object The object to iterate over.
+	 * @param {Function} iteratee The function invoked per iteration.
+	 * @param {Function} keysFunc The function to get the keys of `object`.
+	 * @returns {Object} Returns `object`.
+	 */
+	var baseFor = createBaseFor();
+
+	/**
+	 * Creates a base function for methods like `_.forIn`.
+	 *
+	 * @private
+	 * @param {boolean} [fromRight] Specify iterating from right to left.
+	 * @returns {Function} Returns the new base function.
+	 */
+	function createBaseFor(fromRight) {
+	  return function(object, iteratee, keysFunc) {
+	    var index = -1,
+	        iterable = Object(object),
+	        props = keysFunc(object),
+	        length = props.length;
+
+	    while (length--) {
+	      var key = props[fromRight ? length : ++index];
+	      if (iteratee(iterable[key], key, iterable) === false) {
+	        break;
+	      }
+	    }
+	    return object;
+	  };
+	}
+
+	module.exports = baseFor;
+
+
+/***/ }),
+/* 343 */
+/***/ (function(module, exports) {
+
+	/**
+	 * lodash (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modularize exports="npm" -o ./`
+	 * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+	 * Released under MIT license <https://lodash.com/license>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 */
+
+	/** Used as references for various `Number` constants. */
+	var MAX_SAFE_INTEGER = 9007199254740991;
+
+	/** `Object#toString` result references. */
+	var argsTag = '[object Arguments]',
+	    funcTag = '[object Function]',
+	    genTag = '[object GeneratorFunction]';
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var objectToString = objectProto.toString;
+
+	/** Built-in value references. */
+	var propertyIsEnumerable = objectProto.propertyIsEnumerable;
+
+	/**
+	 * Checks if `value` is likely an `arguments` object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+	 *  else `false`.
+	 * @example
+	 *
+	 * _.isArguments(function() { return arguments; }());
+	 * // => true
+	 *
+	 * _.isArguments([1, 2, 3]);
+	 * // => false
+	 */
+	function isArguments(value) {
+	  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+	  return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
+	    (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
+	}
+
+	/**
+	 * Checks if `value` is array-like. A value is considered array-like if it's
+	 * not a function and has a `value.length` that's an integer greater than or
+	 * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+	 * @example
+	 *
+	 * _.isArrayLike([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isArrayLike(document.body.children);
+	 * // => true
+	 *
+	 * _.isArrayLike('abc');
+	 * // => true
+	 *
+	 * _.isArrayLike(_.noop);
+	 * // => false
+	 */
+	function isArrayLike(value) {
+	  return value != null && isLength(value.length) && !isFunction(value);
+	}
+
+	/**
+	 * This method is like `_.isArrayLike` except that it also checks if `value`
+	 * is an object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an array-like object,
+	 *  else `false`.
+	 * @example
+	 *
+	 * _.isArrayLikeObject([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isArrayLikeObject(document.body.children);
+	 * // => true
+	 *
+	 * _.isArrayLikeObject('abc');
+	 * // => false
+	 *
+	 * _.isArrayLikeObject(_.noop);
+	 * // => false
+	 */
+	function isArrayLikeObject(value) {
+	  return isObjectLike(value) && isArrayLike(value);
+	}
+
+	/**
+	 * Checks if `value` is classified as a `Function` object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+	 * @example
+	 *
+	 * _.isFunction(_);
+	 * // => true
+	 *
+	 * _.isFunction(/abc/);
+	 * // => false
+	 */
+	function isFunction(value) {
+	  // The use of `Object#toString` avoids issues with the `typeof` operator
+	  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+	  var tag = isObject(value) ? objectToString.call(value) : '';
+	  return tag == funcTag || tag == genTag;
+	}
+
+	/**
+	 * Checks if `value` is a valid array-like length.
+	 *
+	 * **Note:** This method is loosely based on
+	 * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+	 * @example
+	 *
+	 * _.isLength(3);
+	 * // => true
+	 *
+	 * _.isLength(Number.MIN_VALUE);
+	 * // => false
+	 *
+	 * _.isLength(Infinity);
+	 * // => false
+	 *
+	 * _.isLength('3');
+	 * // => false
+	 */
+	function isLength(value) {
+	  return typeof value == 'number' &&
+	    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+	}
+
+	/**
+	 * Checks if `value` is the
+	 * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+	 * @example
+	 *
+	 * _.isObject({});
+	 * // => true
+	 *
+	 * _.isObject([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObject(_.noop);
+	 * // => true
+	 *
+	 * _.isObject(null);
+	 * // => false
+	 */
+	function isObject(value) {
+	  var type = typeof value;
+	  return !!value && (type == 'object' || type == 'function');
+	}
+
+	/**
+	 * Checks if `value` is object-like. A value is object-like if it's not `null`
+	 * and has a `typeof` result of "object".
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+	 * @example
+	 *
+	 * _.isObjectLike({});
+	 * // => true
+	 *
+	 * _.isObjectLike([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObjectLike(_.noop);
+	 * // => false
+	 *
+	 * _.isObjectLike(null);
+	 * // => false
+	 */
+	function isObjectLike(value) {
+	  return !!value && typeof value == 'object';
+	}
+
+	module.exports = isArguments;
+
+
+/***/ }),
+/* 344 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	/**
+	 * lodash 3.0.8 (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modern modularize exports="npm" -o ./`
+	 * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 * Available under MIT license <https://lodash.com/license>
+	 */
+	var isArguments = __webpack_require__(343),
+	    isArray = __webpack_require__(345);
+
+	/** Used to detect unsigned integer values. */
+	var reIsUint = /^\d+$/;
+
+	/** Used for native method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/**
+	 * Used as the [maximum length](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-number.max_safe_integer)
+	 * of an array-like value.
+	 */
+	var MAX_SAFE_INTEGER = 9007199254740991;
+
+	/**
+	 * Checks if `value` is a valid array-like index.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+	 * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+	 */
+	function isIndex(value, length) {
+	  value = (typeof value == 'number' || reIsUint.test(value)) ? +value : -1;
+	  length = length == null ? MAX_SAFE_INTEGER : length;
+	  return value > -1 && value % 1 == 0 && value < length;
+	}
+
+	/**
+	 * Checks if `value` is a valid array-like length.
+	 *
+	 * **Note:** This function is based on [`ToLength`](https://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength).
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+	 */
+	function isLength(value) {
+	  return typeof value == 'number' && value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+	}
+
+	/**
+	 * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
+	 * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+	 * @example
+	 *
+	 * _.isObject({});
+	 * // => true
+	 *
+	 * _.isObject([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObject(1);
+	 * // => false
+	 */
+	function isObject(value) {
+	  // Avoid a V8 JIT bug in Chrome 19-20.
+	  // See https://code.google.com/p/v8/issues/detail?id=2291 for more details.
+	  var type = typeof value;
+	  return !!value && (type == 'object' || type == 'function');
+	}
+
+	/**
+	 * Creates an array of the own and inherited enumerable property names of `object`.
+	 *
+	 * **Note:** Non-object values are coerced to objects.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Object
+	 * @param {Object} object The object to query.
+	 * @returns {Array} Returns the array of property names.
+	 * @example
+	 *
+	 * function Foo() {
+	 *   this.a = 1;
+	 *   this.b = 2;
+	 * }
+	 *
+	 * Foo.prototype.c = 3;
+	 *
+	 * _.keysIn(new Foo);
+	 * // => ['a', 'b', 'c'] (iteration order is not guaranteed)
+	 */
+	function keysIn(object) {
+	  if (object == null) {
+	    return [];
+	  }
+	  if (!isObject(object)) {
+	    object = Object(object);
+	  }
+	  var length = object.length;
+	  length = (length && isLength(length) &&
+	    (isArray(object) || isArguments(object)) && length) || 0;
+
+	  var Ctor = object.constructor,
+	      index = -1,
+	      isProto = typeof Ctor == 'function' && Ctor.prototype === object,
+	      result = Array(length),
+	      skipIndexes = length > 0;
+
+	  while (++index < length) {
+	    result[index] = (index + '');
+	  }
+	  for (var key in object) {
+	    if (!(skipIndexes && isIndex(key, length)) &&
+	        !(key == 'constructor' && (isProto || !hasOwnProperty.call(object, key)))) {
+	      result.push(key);
+	    }
+	  }
+	  return result;
+	}
+
+	module.exports = keysIn;
+
+
+/***/ }),
+/* 345 */
+/***/ (function(module, exports) {
+
+	/**
+	 * lodash 3.0.4 (Custom Build) <https://lodash.com/>
+	 * Build: `lodash modern modularize exports="npm" -o ./`
+	 * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+	 * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	 * Available under MIT license <https://lodash.com/license>
+	 */
+
+	/** `Object#toString` result references. */
+	var arrayTag = '[object Array]',
+	    funcTag = '[object Function]';
+
+	/** Used to detect host constructors (Safari > 5). */
+	var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+	/**
+	 * Checks if `value` is object-like.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+	 */
+	function isObjectLike(value) {
+	  return !!value && typeof value == 'object';
+	}
+
+	/** Used for native method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to resolve the decompiled source of functions. */
+	var fnToString = Function.prototype.toString;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/**
+	 * Used to resolve the [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var objToString = objectProto.toString;
+
+	/** Used to detect if a method is native. */
+	var reIsNative = RegExp('^' +
+	  fnToString.call(hasOwnProperty).replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')
+	  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+	);
+
+	/* Native method references for those with the same name as other `lodash` methods. */
+	var nativeIsArray = getNative(Array, 'isArray');
+
+	/**
+	 * Used as the [maximum length](http://ecma-international.org/ecma-262/6.0/#sec-number.max_safe_integer)
+	 * of an array-like value.
+	 */
+	var MAX_SAFE_INTEGER = 9007199254740991;
+
+	/**
+	 * Gets the native function at `key` of `object`.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @param {string} key The key of the method to get.
+	 * @returns {*} Returns the function if it's native, else `undefined`.
+	 */
+	function getNative(object, key) {
+	  var value = object == null ? undefined : object[key];
+	  return isNative(value) ? value : undefined;
+	}
+
+	/**
+	 * Checks if `value` is a valid array-like length.
+	 *
+	 * **Note:** This function is based on [`ToLength`](http://ecma-international.org/ecma-262/6.0/#sec-tolength).
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+	 */
+	function isLength(value) {
+	  return typeof value == 'number' && value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+	}
+
+	/**
+	 * Checks if `value` is classified as an `Array` object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is correctly classified, else `false`.
+	 * @example
+	 *
+	 * _.isArray([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isArray(function() { return arguments; }());
+	 * // => false
+	 */
+	var isArray = nativeIsArray || function(value) {
+	  return isObjectLike(value) && isLength(value.length) && objToString.call(value) == arrayTag;
+	};
+
+	/**
+	 * Checks if `value` is classified as a `Function` object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is correctly classified, else `false`.
+	 * @example
+	 *
+	 * _.isFunction(_);
+	 * // => true
+	 *
+	 * _.isFunction(/abc/);
+	 * // => false
+	 */
+	function isFunction(value) {
+	  // The use of `Object#toString` avoids issues with the `typeof` operator
+	  // in older versions of Chrome and Safari which return 'function' for regexes
+	  // and Safari 8 equivalents which return 'object' for typed array constructors.
+	  return isObject(value) && objToString.call(value) == funcTag;
+	}
+
+	/**
+	 * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
+	 * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+	 * @example
+	 *
+	 * _.isObject({});
+	 * // => true
+	 *
+	 * _.isObject([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObject(1);
+	 * // => false
+	 */
+	function isObject(value) {
+	  // Avoid a V8 JIT bug in Chrome 19-20.
+	  // See https://code.google.com/p/v8/issues/detail?id=2291 for more details.
+	  var type = typeof value;
+	  return !!value && (type == 'object' || type == 'function');
+	}
+
+	/**
+	 * Checks if `value` is a native function.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a native function, else `false`.
+	 * @example
+	 *
+	 * _.isNative(Array.prototype.push);
+	 * // => true
+	 *
+	 * _.isNative(_);
+	 * // => false
+	 */
+	function isNative(value) {
+	  if (value == null) {
+	    return false;
+	  }
+	  if (isFunction(value)) {
+	    return reIsNative.test(fnToString.call(value));
+	  }
+	  return isObjectLike(value) && reIsHostCtor.test(value);
+	}
+
+	module.exports = isArray;
+
+
+/***/ }),
+/* 346 */
+/***/ (function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	/**
+	 * Redux dispatch multiple actions
+	 */
+
+	function multi(_ref) {
+	  var dispatch = _ref.dispatch;
+
+	  return function (next) {
+	    return function (action) {
+	      return Array.isArray(action) ? action.filter(Boolean).map(dispatch) : next(action);
+	    };
+	  };
+	}
+
+	/**
+	 * Exports
+	 */
+
+	exports.default = multi;
+
+/***/ }),
+/* 347 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	exports.__esModule = true;
+	function createThunkMiddleware(extraArgument) {
+	  return function (_ref) {
+	    var dispatch = _ref.dispatch,
+	        getState = _ref.getState;
+	    return function (next) {
+	      return function (action) {
+	        if (typeof action === 'function') {
+	          return action(dispatch, getState, extraArgument);
+	        }
+
+	        return next(action);
+	      };
+	    };
+	  };
+	}
+
+	var thunk = createThunkMiddleware();
+	thunk.withExtraArgument = createThunkMiddleware;
+
+	exports['default'] = thunk;
 
 /***/ })
 /******/ ]);
