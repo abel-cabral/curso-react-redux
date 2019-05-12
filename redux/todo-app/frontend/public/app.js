@@ -29383,7 +29383,7 @@
 	                        } }),
 	                    _react2.default.createElement(_iconButton2.default, { style: 'info', icon: 'search',
 	                        onClick: function onClick() {
-	                            return search(description);
+	                            return search();
 	                        } }),
 	                    _react2.default.createElement(_iconButton2.default, { style: 'default', icon: 'close',
 	                        onClick: function onClick() {
@@ -31727,13 +31727,20 @@
 	  };
 	};
 
+	/*
+	  NOTE Acessa diretamente o valor na props e o passa para a requisição, 
+	  nao precisamos nos preocupar com promise do redux 
+	*/
 	var search = exports.search = function search() {
-	  var description = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-
-	  var request = _axios2.default.get(URL + '?sort=-createdAt' + description);
-	  return {
-	    type: 'TODO_SEARCHED',
-	    payload: request // NOTE Retornamos a funcao asyncrona, precisa de middleware
+	  return function (dispatch, getState) {
+	    var description = getState().todo.description;
+	    var search = description ? '&description__regex=/' + description + '/' : '';
+	    _axios2.default.get(URL + '?sort=-createdAt' + search).then(function (response) {
+	      return dispatch({
+	        type: 'TODO_SEARCHED',
+	        payload: response.data
+	      });
+	    });
 	  };
 	};
 
@@ -31790,9 +31797,9 @@
 	};
 
 	var cleanForm = exports.cleanForm = function cleanForm() {
-	  return {
+	  return [{
 	    type: 'CLEAR_FORM'
-	  };
+	  }, search()];
 	};
 
 /***/ }),
@@ -32054,7 +32061,7 @@
 	    case 'DESCRIPTION_CHANGED':
 	      return _extends({}, state, { description: action.payload });
 	    case 'TODO_SEARCHED':
-	      return _extends({}, state, { list: action.payload.data });
+	      return _extends({}, state, { list: action.payload });
 	    case 'CLEAR_FORM':
 	      return _extends({}, state, { description: '' }); // Irá limpar a descrição após add um novo elemento
 	    default:

@@ -12,11 +12,20 @@ export const changeDescription = event => ({
   payload: event.target.value // Esse é opcional, mas estou retornando o valor alterado
 });
 
-export const search = (description = '') => {
-  const request = axios.get(`${URL}?sort=-createdAt${description}`);
-  return {
-    type: 'TODO_SEARCHED',
-    payload: request // NOTE Retornamos a funcao asyncrona, precisa de middleware
+/*
+  NOTE Acessa diretamente o valor na props e o passa para a requisição, 
+  nao precisamos nos preocupar com promise do redux 
+*/
+export const search = () => {
+  return (dispatch, getState) => {
+    const description = getState().todo.description;
+    const search = description ? `&description__regex=/${description}/` : '';
+    axios.get(URL + '?sort=-createdAt' + search).then(response =>
+      dispatch({
+        type: 'TODO_SEARCHED',
+        payload: response.data
+      })
+    );
   };
 };
 
@@ -76,7 +85,10 @@ export const remove = todo => {
 };
 
 export const cleanForm = () => {
-  return {
-    type: 'CLEAR_FORM'
-  };
+  return [
+    {
+      type: 'CLEAR_FORM'
+    },
+    search()
+  ];
 };

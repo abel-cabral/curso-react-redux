@@ -51,7 +51,7 @@ export class TodoForm extends Component {
                     <IconButton style="primary" icon="plus"
                         onClick={() => add(description)}></IconButton>
                     <IconButton style="info" icon="search"
-                        onClick={() => search(description)} />
+                        onClick={() => search()} />
                     <IconButton style="default" icon="close"
                         onClick={() => cleanForm()} />
                 </Grid>

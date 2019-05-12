@@ -9,7 +9,7 @@ export default (state = INITIAL_STATE, action) => {
     case 'DESCRIPTION_CHANGED':
       return { ...state, description: action.payload };
     case 'TODO_SEARCHED':
-      return { ...state, list: action.payload.data };    
+      return { ...state, list: action.payload };    
     case 'CLEAR_FORM':
       return { ...state, description: '' }; // Irá limpar a descrição após add um novo elemento
     default:
